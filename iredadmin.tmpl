@@ -1,0 +1,42 @@
+# Settings for iRedAdmin.
+
+# static files under /admin/static
+location ~ ^/admin/static/(.*) {
+    alias /var/www/iredadmin/static/$1;
+}
+
+# Handle newsletter-style subscription/unsubscription supported in iRedAdmin-Pro.
+location ~ ^/newsletter/ {
+    include /etc/nginx/templates/hsts.tmpl;
+
+    include uwsgi_params;
+    uwsgi_pass unix:/run/uwsgi/iredadmin.socket;
+    uwsgi_param UWSGI_CHDIR /var/www/iredadmin;
+    uwsgi_param UWSGI_SCRIPT iredadmin;
+    uwsgi_param SCRIPT_NAME /admin;
+    uwsgi_param REQUEST_URI /admin/$request_uri;
+}
+
+# Python scripts
+location ~ ^/admin(.*) {
+    rewrite ^/admin(/.*)$ $1 break;
+
+    include /etc/nginx/templates/hsts.tmpl;
+
+    include uwsgi_params;
+    uwsgi_pass unix:/run/uwsgi/iredadmin.socket;
+    uwsgi_param UWSGI_CHDIR /var/www/iredadmin;
+    uwsgi_param UWSGI_SCRIPT iredadmin;
+    uwsgi_param SCRIPT_NAME /admin;
+
+    # Access control
+    #allow 127.0.0.1;
+    #allow 192.168.1.10;
+    #allow 192.168.1.0/24;
+    #deny all;
+}
+
+# iRedAdmin: redirect /admin to /admin/
+location = /admin {
+    rewrite ^ /admin/;
+}
